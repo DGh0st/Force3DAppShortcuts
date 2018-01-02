@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Enable/Disable the tweak (respring required).</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>isEnabled</string>
+			<key>label</key>
+			<string>Enable</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Respring</string>
+			<key>action</key>
+			<string>respring</string>
+			<key>alignment</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Press Duration</string>
+			<key>footerText</key>
+			<string>Set the duration required to invoke shortcuts.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>cellClass</key>
+			<string>FASSliderCell</string>
+			<key>min</key>
+			<real>0.125</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>default</key>
+			<real>0.2</real>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>longPressDuration</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Peek Duration</string>
+			<key>footerText</key>
+			<string>Set the duration for peeking (adds additional delay to press duration).</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>cellClass</key>
+			<string>FASSliderCell</string>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>0.5</real>
+			<key>showValue</key>
+			<true/>
+			<key>default</key>
+			<real>0.175</real>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>peekDuration</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Peek Force</string>
+			<key>footerText</key>
+			<string>Set the force for peeking.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>cellClass</key>
+			<string>FASSliderCell</string>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>default</key>
+			<real>0.5</real>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>peekTouchForce</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>key</key>
+			<string>editingGesture</string>
+			<key>label</key>
+			<string>Editing Gesture</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>validTitles</key>
+			<array>
+				<string>Double Tap</string>
+				<string>Swipe Up</string>
+				<string>Swipe Down</string>
+				<string>Swipe Left</string>
+				<string>Swipe Right</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>4</integer>
+			</array>
+			<key>default</key>
+			<integer>1</integer>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Haptic Feedback</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>isVibrationEnabled</string>
+			<key>label</key>
+			<string>Enable Vibration</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Vibration Duration</string>
+			<key>footerText</key>
+			<string>Set the duration for the vibration.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>cellClass</key>
+			<string>FASSliderCell</string>
+			<key>default</key>
+			<integer>25</integer>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>vibrationDuration</string>
+			<key>min</key>
+			<integer>0</integer>
+			<key>max</key>
+			<integer>100</integer>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Vibration Intensity</string>
+			<key>footerText</key>
+			<string>Set the intensity of the vibration.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>cellClass</key>
+			<string>FASSliderCell</string>
+			<key>default</key>
+			<real>0.75</real>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>vibrationIntensity</string>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Credits</string>
+			<key>footerText</key>
+			<string>Enjoy the tweak :)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>email</string>
+			<key>label</key>
+			<string>Email Support</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>donate</string>
+			<key>label</key>
+			<string>Donate</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>follow</string>
+			<key>label</key>
+			<string>Follow on twitter (@D_Gh0st)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerAlignment</key>
+			<integer>1</integer>
+			<key>footerText</key>
+			<string>Force3DAppShortcuts © 2018 DGh0st</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Force3DAppShortcuts</string>
+</dict>
+</plist>
