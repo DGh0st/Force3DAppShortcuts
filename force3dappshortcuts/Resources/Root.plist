@@ -121,6 +121,26 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Auto dismiss shortcut menu on finger lift.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.dgh0st.force3dappshortcuts</string>
+			<key>key</key>
+			<string>isAutoDismissEnabled</string>
+			<key>label</key>
+			<string>Auto Dismiss</string>
+			<key>PostNotification</key>
+			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
 		</dict>
 		<dict>
 			<key>cell</key>

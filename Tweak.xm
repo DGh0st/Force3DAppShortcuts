@@ -3,7 +3,29 @@
 
 extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystemSoundID, id unknown, NSDictionary *options);
 
-@interface SBUIAppIconForceTouchController : NSObject
+@interface SBUIIconForceTouchIconViewWrapperView : UIView
+@end
+
+@interface SBUIIconForceTouchWrapperViewController : UIViewController
+@end
+
+@interface SBUIIconForceTouchViewController : UIViewController {
+	SBUIIconForceTouchWrapperViewController *_primaryViewController;
+	SBUIIconForceTouchWrapperViewController *_secondaryViewController;
+	SBUIIconForceTouchIconViewWrapperView *_iconViewWrapperViewBelow;
+	SBUIIconForceTouchIconViewWrapperView *_iconViewWrapperViewAbove;
+}
+@end
+
+@interface SBUIIconForceTouchController : NSObject {
+	SBUIIconForceTouchViewController *_iconForceTouchViewController;
+}
++(BOOL)_isPeekingOrShowing;
+@end
+
+@interface SBUIAppIconForceTouchController : NSObject {
+	SBUIIconForceTouchController *_iconForceTouchController;
+}
 -(void)_setupWithGestureRecognizer:(id)arg1;
 -(void)_presentAnimated:(BOOL)arg1 withCompletionHandler:(id)arg2;
 -(void)dismissAnimated:(BOOL)arg1 withCompletionHandler:(id)arg2;
@@ -23,8 +45,10 @@ extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystem
 @interface SBIconView : UIView
 @property (nonatomic,retain) UIGestureRecognizer * editingGestureRecognizer;
 @property (nonatomic,retain) UIGestureRecognizer * appIconForceTouchGestureRecognizer;
+@property (nonatomic,assign) BOOL didPresentAfterPeek;
 -(void)_handleSecondHalfLongPressTimer:(id)arg1;
 -(void)cancelLongPressTimer;
+-(SBUIIconForceTouchViewController *)_iconForceTouchViewController;
 @end
 
 @interface FBSystemService
@@ -50,6 +74,8 @@ static BOOL isEnabled = YES;
 static CGFloat longPressDuration = 0.2;
 static CGFloat peekDuration = 0.175;
 static CGFloat peekTouchForce = 0.5;
+
+static BOOL isAutoDismissEnabled = YES;
 
 static GestureType editingGesture = swipeUp;
 
@@ -79,6 +105,8 @@ static void reloadPrefs() {
 	peekDuration = [prefs objectForKey:@"peekDuration"] ? [[prefs objectForKey:@"peekDuration"] floatValue] : 0.175;
 	peekTouchForce = [prefs objectForKey:@"peekTouchForce"] ? [[prefs objectForKey:@"peekTouchForce"] floatValue] : 0.5;
 
+	isAutoDismissEnabled = [prefs objectForKey:@"isAutoDismissEnabled"] ? [[prefs objectForKey:@"isAutoDismissEnabled"] boolValue] : YES;
+
 	editingGesture = [prefs objectForKey:@"editingGesture"] ? ((GestureType)[[prefs objectForKey:@"editingGesture"] intValue]) : swipeUp;
 
 	isVibrationEnabled =  [prefs objectForKey:@"isVibrationEnabled"] ? [[prefs objectForKey:@"isVibrationEnabled"] boolValue] : YES;
@@ -104,6 +132,7 @@ static void hapticFeedback() {
 
 %hook SBIconView
 %property (nonatomic, retain) UIGestureRecognizer * editingGestureRecognizer;
+%property (nonatomic, assign) BOOL didPresentAfterPeek;
 
 -(void)setLocation:(NSInteger)arg1 {
 	if (isEnabled) {
@@ -152,25 +181,100 @@ static void hapticFeedback() {
 		[_forceTouchAppController _setupWithGestureRecognizer:gestureRecognizer];
 		[_forceTouchAppController _peekAnimated:YES withRelativeTouchForce:peekTouchForce allowSmoothing:NO];
 
+		self.didPresentAfterPeek = NO;
+
 		// display shortcuts after a delay
 		[self performSelector:@selector(_display3DTouchShortcuts:) withObject:_forceTouchAppController afterDelay:peekDuration];
+	} else if (!self.didPresentAfterPeek && gestureRecognizer.state == UIGestureRecognizerStateChanged) {
+		// dismiss peeked shortcut if finger left icon view
+		SBUIAppIconForceTouchController *_forceTouchAppController = MSHookIvar<SBUIAppIconForceTouchController *>([%c(SBIconController) sharedInstance], "_appIconForceTouchController");
+		CGPoint location = [gestureRecognizer locationInView:self];
+		if (!CGRectContainsPoint(self.bounds, location))
+			[_forceTouchAppController dismissAnimated:YES withCompletionHandler:nil];
+	} else if (isAutoDismissEnabled && (gestureRecognizer.state == UIGestureRecognizerStateEnded || gestureRecognizer.state == UIGestureRecognizerStateRecognized)) {
+		// auto dimiss shortcuts menu if finger lifted outside the shortcuts menu view
+		SBUIAppIconForceTouchController *_forceTouchAppController = MSHookIvar<SBUIAppIconForceTouchController *>([%c(SBIconController) sharedInstance], "_appIconForceTouchController");
+		if (_forceTouchAppController != nil) {
+			SBUIIconForceTouchViewController *_iconForceTouchViewController = [self _iconForceTouchViewController];
+			if (_iconForceTouchViewController != nil) {
+				BOOL shouldDismiss = NO;
+
+				SBUIIconForceTouchWrapperViewController *_primaryViewController = MSHookIvar<SBUIIconForceTouchWrapperViewController *>(_iconForceTouchViewController, "_primaryViewController");
+				if (_primaryViewController != nil) {
+					// dismiss if not within the shortcuts view
+					CGPoint location = [gestureRecognizer locationInView:_primaryViewController.view];
+					shouldDismiss = !CGRectContainsPoint(_primaryViewController.view.bounds, location);
+				}
+
+				if (shouldDismiss) {
+					SBUIIconForceTouchWrapperViewController *_secondaryViewController = MSHookIvar<SBUIIconForceTouchWrapperViewController *>(_iconForceTouchViewController, "_secondaryViewController");
+					if (_secondaryViewController != nil) {
+						// dismiss if not within the shortcuts view
+						CGPoint location = [gestureRecognizer locationInView:_secondaryViewController.view];
+						shouldDismiss = !CGRectContainsPoint(_secondaryViewController.view.bounds, location);
+					}
+				}
+
+				if (shouldDismiss)
+					[_forceTouchAppController dismissAnimated:YES withCompletionHandler:nil];
+			}
+		}
 	}
 }
 
 %new
 -(void)_display3DTouchShortcuts:(SBUIAppIconForceTouchController *)forceTouchAppController {
+	self.didPresentAfterPeek = YES;
+
 	if (forceTouchAppController != nil) {
 		if (self.appIconForceTouchGestureRecognizer.state == UIGestureRecognizerStateBegan || self.appIconForceTouchGestureRecognizer.state == UIGestureRecognizerStateChanged || self.appIconForceTouchGestureRecognizer.state == UIGestureRecognizerStateEnded || self.appIconForceTouchGestureRecognizer.state == UIGestureRecognizerStateRecognized) {
-			// haptic feedback
-			hapticFeedback();
-			
-			// display shortcut menu
-			[forceTouchAppController _presentAnimated:YES withCompletionHandler:nil];
+			SBUIIconForceTouchViewController *_iconForceTouchViewController = [self _iconForceTouchViewController];
+			if (_iconForceTouchViewController != nil) {
+				BOOL shouldPresent = NO;
+
+				SBUIIconForceTouchIconViewWrapperView *_iconViewWrapperViewAbove = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(_iconForceTouchViewController, "_iconViewWrapperViewAbove");
+				if (_iconViewWrapperViewAbove != nil) {
+					// display if within the icon view
+					CGPoint location = [self.appIconForceTouchGestureRecognizer locationInView:_iconViewWrapperViewAbove];
+					shouldPresent = CGRectContainsPoint(_iconViewWrapperViewAbove.bounds, location);
+				}
+
+				if (!shouldPresent) {
+					SBUIIconForceTouchIconViewWrapperView *_iconViewWrapperViewBelow = MSHookIvar<SBUIIconForceTouchIconViewWrapperView *>(_iconForceTouchViewController, "_iconViewWrapperViewBelow");
+					if (_iconViewWrapperViewBelow != nil) {
+						// display if within the icon view
+						CGPoint location = [self.appIconForceTouchGestureRecognizer locationInView:_iconViewWrapperViewBelow];
+						shouldPresent = CGRectContainsPoint(_iconViewWrapperViewBelow.bounds, location);
+					}
+				}
+
+				if (shouldPresent) {
+					// haptic feedback
+					hapticFeedback();
+
+					// display shortcut menu
+					[forceTouchAppController _presentAnimated:YES withCompletionHandler:nil];
+					return;
+				}
+			}
+			// dismiss peeked shortcuts (if execution ever reaches this point then it means something went wrong)
+			[forceTouchAppController dismissAnimated:YES withCompletionHandler:nil];
 		} else {
 			// dismiss peeked shortcuts
 			[forceTouchAppController dismissAnimated:YES withCompletionHandler:nil];
 		}
 	}
+}
+
+%new
+-(SBUIIconForceTouchViewController *)_iconForceTouchViewController {
+	SBUIAppIconForceTouchController *_forceTouchAppController = MSHookIvar<SBUIAppIconForceTouchController *>([%c(SBIconController) sharedInstance], "_appIconForceTouchController");
+	if (_forceTouchAppController != nil) {
+		SBUIIconForceTouchController *_iconForceTouchController = MSHookIvar<SBUIIconForceTouchController *>(_forceTouchAppController, "_iconForceTouchController");
+		if (_iconForceTouchController != nil)
+			return (SBUIIconForceTouchViewController *)MSHookIvar<SBUIIconForceTouchViewController *>(_iconForceTouchController, "_iconForceTouchViewController");
+	}
+	return nil;
 }
 
 %new
