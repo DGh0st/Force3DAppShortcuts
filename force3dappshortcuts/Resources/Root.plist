@@ -190,7 +190,7 @@
 			<key>key</key>
 			<string>isVibrationEnabled</string>
 			<key>label</key>
-			<string>Enable Vibration</string>
+			<string>Enable Haptic Feedback</string>
 			<key>PostNotification</key>
 			<string>com.dgh0st.force3dappshortcuts/settingschanged</string>
 		</dict>
@@ -198,9 +198,9 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Vibration Duration</string>
+			<string>Haptic Duration</string>
 			<key>footerText</key>
-			<string>Set the duration for the vibration.</string>
+			<string>Set the duration for the haptic feedback.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -208,7 +208,7 @@
 			<key>cellClass</key>
 			<string>FASSliderCell</string>
 			<key>default</key>
-			<integer>25</integer>
+			<integer>30</integer>
 			<key>defaults</key>
 			<string>com.dgh0st.force3dappshortcuts</string>
 			<key>key</key>
@@ -226,9 +226,9 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Vibration Intensity</string>
+			<string>Haptic Intensity</string>
 			<key>footerText</key>
-			<string>Set the intensity of the vibration.</string>
+			<string>Set the intensity of the haptic feedback.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -236,7 +236,7 @@
 			<key>cellClass</key>
 			<string>FASSliderCell</string>
 			<key>default</key>
-			<real>0.75</real>
+			<real>2.0</real>
 			<key>defaults</key>
 			<string>com.dgh0st.force3dappshortcuts</string>
 			<key>key</key>
@@ -244,7 +244,7 @@
 			<key>min</key>
 			<real>0.2</real>
 			<key>max</key>
-			<real>1.0</real>
+			<real>3.0</real>
 			<key>showValue</key>
 			<true/>
 			<key>PostNotification</key>
