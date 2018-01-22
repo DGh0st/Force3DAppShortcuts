@@ -337,8 +337,17 @@ static void hapticFeedback() {
 
 -(void)_updateJitter {
 	// just incase anything goes wrong (code from RevealMenu)
-	[[%c(SBIconController) sharedInstance] _dismissAppIconForceTouchControllerIfNecessaryAnimated:YES withCompletionHandler:nil];
+	if (isEnabled)
+		[[%c(SBIconController) sharedInstance] _dismissAppIconForceTouchControllerIfNecessaryAnimated:YES withCompletionHandler:nil];
+
 	%orig();
+}
+
+-(void)setHighlighted:(BOOL)arg1 {
+	%orig(arg1);
+
+	if (arg1 && isEnabled && ![[%c(SBIconController) sharedInstance] isEditing])
+		[self cancelLongPressTimer];
 }
 %end
 
