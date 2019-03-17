@@ -1,13 +1,11 @@
 export ARCHS = armv7 arm64
-export TARGET = iphone:clang:latest:latest
-
-FINALPACKAGE = 1
+export TARGET = iphone:clang:8.1:latest
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Force3DAppShortcuts
 Force3DAppShortcuts_FILES = Tweak.xm
-Force3DAppShortcuts_FRAMEWORKS = UIKit AudioToolbox
+Force3DAppShortcuts_FRAMEWORKS = UIKit AudioToolbox CoreGraphics
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

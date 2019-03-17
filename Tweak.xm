@@ -97,7 +97,7 @@ static void reloadPrefs() {
 			CFRelease(keyList);
 		}
 	} else {
-		prefs = [NSDictionary dictionaryWithContentsOfFile:kSettingsPath];
+		prefs = [[NSDictionary alloc] initWithContentsOfFile:kSettingsPath];
 	}
 
 	isEnabled = [prefs objectForKey:@"isEnabled"] ? [[prefs objectForKey:@"isEnabled"] boolValue] : YES;
@@ -113,6 +113,8 @@ static void reloadPrefs() {
 	isVibrationEnabled =  [prefs objectForKey:@"isVibrationEnabled"] ? [[prefs objectForKey:@"isVibrationEnabled"] boolValue] : YES;
 	vibrationDuration =  [prefs objectForKey:@"vibrationDuration"] ? [[prefs objectForKey:@"vibrationDuration"] intValue] : 30;
 	vibrationIntensity =  [prefs objectForKey:@"vibrationIntensity"] ? [[prefs objectForKey:@"vibrationIntensity"] floatValue] : 2.0;
+
+	[prefs release];
 }
 
 static void respringDevice() {
