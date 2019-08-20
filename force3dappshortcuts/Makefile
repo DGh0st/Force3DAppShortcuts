@@ -1,6 +1,3 @@
-export TARGET = iphone:clang:8.1:latest
-FINAL_PACKAGE = 1
-
 include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = Force3DAppShortcuts

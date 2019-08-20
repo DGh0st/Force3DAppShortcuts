@@ -40,6 +40,7 @@ extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystem
 +(id)sharedInstance;
 -(void)_dismissAppIconForceTouchControllerIfNecessaryAnimated:(BOOL)arg1 withCompletionHandler:(id)arg2;
 -(BOOL)_appIconForceTouchGestureRecognizerShouldBegin;
+-(void)_cancelAppIconForceTouchGestureAndBeginEditing;
 -(BOOL)isEditing;
 @end
 
@@ -49,7 +50,9 @@ extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystem
 @property (nonatomic,assign) BOOL didPresentAfterPeek;
 -(void)_handleSecondHalfLongPressTimer:(id)arg1;
 -(void)cancelLongPressTimer;
+-(void)cancelDrag;
 -(SBUIIconForceTouchViewController *)_iconForceTouchViewController;
+-(void)_configureLongPress3DTouchGesture;
 @end
 
 @interface FBSystemService
@@ -140,82 +143,67 @@ static void hapticFeedback() {
 // Fixes gestures not being registered the first time homescreeen is invoked
 -(id)initWithContentType:(NSUInteger)arg1 {
 	self = %orig(arg1);
-	if (isEnabled && self != nil) {
-		if (![[%c(SBIconController) sharedInstance] isEditing]) {
-			// remove previous gesture and add our own gesture for 3D touch shorcuts
-			if (self.appIconForceTouchGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-			self.appIconForceTouchGestureRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
-			((UILongPressGestureRecognizer  *)self.appIconForceTouchGestureRecognizer).minimumPressDuration = longPressDuration;
-
-			// remove previous gesture and add different gesture for editing
-			if (self.editingGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.editingGestureRecognizer];
-			if (editingGesture == swipeUp || editingGesture == swipeDown || editingGesture == swipeLeft || editingGesture == swipeRight) {
-				self.editingGestureRecognizer = [[[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
-				if (editingGesture == swipeUp)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionUp;
-				else if (editingGesture == swipeDown)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionDown;
-				else if (editingGesture == swipeLeft)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionLeft;
-				else
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionRight;
-				[self addGestureRecognizer:self.editingGestureRecognizer];
-			} else if (editingGesture == doubleTap) {
-				self.editingGestureRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
-				((UITapGestureRecognizer *)self.editingGestureRecognizer).numberOfTapsRequired = 2;
-			}
-			[self addGestureRecognizer:self.editingGestureRecognizer];
-		} else {
-			// remove previous gestures
-			if (self.appIconForceTouchGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-			if (self.editingGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.editingGestureRecognizer];
-		}
-	}
+	if (isEnabled && self != nil)
+		[self _configureLongPress3DTouchGesture];
 	return self;
 }
 
 -(void)setLocation:(NSInteger)arg1 {
-	if (isEnabled) {
-		if (![[%c(SBIconController) sharedInstance] isEditing]) {
-			// remove previous gesture and add our own gesture for 3D touch shorcuts
-			if (self.appIconForceTouchGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-			self.appIconForceTouchGestureRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
-			((UILongPressGestureRecognizer  *)self.appIconForceTouchGestureRecognizer).minimumPressDuration = longPressDuration;
-
-			// remove previous gesture and add different gesture for editing
-			if (self.editingGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.editingGestureRecognizer];
-			if (editingGesture == swipeUp || editingGesture == swipeDown || editingGesture == swipeLeft || editingGesture == swipeRight) {
-				self.editingGestureRecognizer = [[[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
-				if (editingGesture == swipeUp)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionUp;
-				else if (editingGesture == swipeDown)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionDown;
-				else if (editingGesture == swipeLeft)
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionLeft;
-				else
-					((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionRight;
-				[self addGestureRecognizer:self.editingGestureRecognizer];
-			} else if (editingGesture == doubleTap) {
-				self.editingGestureRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
-				((UITapGestureRecognizer *)self.editingGestureRecognizer).numberOfTapsRequired = 2;
-			}
-			[self addGestureRecognizer:self.editingGestureRecognizer];
-		} else {
-			// remove previous gestures
-			if (self.appIconForceTouchGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-			if (self.editingGestureRecognizer != nil)
-				[self removeGestureRecognizer:self.editingGestureRecognizer];
-		}
-	}
+	if (isEnabled)
+		[self _configureLongPress3DTouchGesture];
 
 	%orig(arg1);
+}
+
+-(void)_updateIconImageViewAnimated:(BOOL)arg1 {
+	if (isEnabled)
+		[self _configureLongPress3DTouchGesture];
+
+	%orig(arg1);
+}
+
+-(void)_applyEditingStateAnimated:(BOOL)arg1 {
+	if (isEnabled)
+		[self _configureLongPress3DTouchGesture];
+
+	%orig(arg1);
+}
+
+%new
+-(void)_configureLongPress3DTouchGesture {
+	if (![[%c(SBIconController) sharedInstance] isEditing]) {
+		// remove previous gesture and add our own gesture for 3D touch shorcuts
+		if (self.appIconForceTouchGestureRecognizer != nil)
+			[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
+		self.appIconForceTouchGestureRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
+		((UILongPressGestureRecognizer  *)self.appIconForceTouchGestureRecognizer).minimumPressDuration = longPressDuration;
+
+		// remove previous gesture and add different gesture for editing
+		if (self.editingGestureRecognizer != nil)
+			[self removeGestureRecognizer:self.editingGestureRecognizer];
+		if (editingGesture == swipeUp || editingGesture == swipeDown || editingGesture == swipeLeft || editingGesture == swipeRight) {
+			self.editingGestureRecognizer = [[[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
+			if (editingGesture == swipeUp)
+				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionUp;
+			else if (editingGesture == swipeDown)
+				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionDown;
+			else if (editingGesture == swipeLeft)
+				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionLeft;
+			else
+				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionRight;
+			[self addGestureRecognizer:self.editingGestureRecognizer];
+		} else if (editingGesture == doubleTap) {
+			self.editingGestureRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
+			((UITapGestureRecognizer *)self.editingGestureRecognizer).numberOfTapsRequired = 2;
+		}
+		[self addGestureRecognizer:self.editingGestureRecognizer];
+	} else {
+		// remove previous gestures
+		if (self.appIconForceTouchGestureRecognizer != nil)
+			[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
+		if (self.editingGestureRecognizer != nil)
+			[self removeGestureRecognizer:self.editingGestureRecognizer];
+	}
 }
 
 %new
@@ -224,8 +212,12 @@ static void hapticFeedback() {
 	if ([_iconController isEditing])
 		return; // do nothing when editing enabled
 	if ([_iconController _appIconForceTouchGestureRecognizerShouldBegin] && gestureRecognizer.state == UIGestureRecognizerStateBegan) {
-		// stop from going into editing mode
-		[(SBIconView *)gestureRecognizer.view cancelLongPressTimer];
+		// stop from going into editing mode or dragging mode
+		SBIconView *iconView = (SBIconView *)gestureRecognizer.view;
+		if ([iconView respondsToSelector:@selector(cancelLongPressTimer)])
+			[iconView cancelLongPressTimer];
+		else if ([iconView respondsToSelector:@selector(cancelDrag)])
+			[iconView cancelDrag];
 
 		// create shortcuts and peek
 		SBUIAppIconForceTouchController *_forceTouchAppController = [[[%c(SBUIAppIconForceTouchController) alloc] init] autorelease];
@@ -334,7 +326,10 @@ static void hapticFeedback() {
 %new
 -(void)_handleEditingeditingGestureRecognizer:(UISwipeGestureRecognizer *)gestureRecognizer {
 	// go into editing mode
-	[self _handleSecondHalfLongPressTimer:nil];
+	if ([self respondsToSelector:@selector(_handleSecondHalfLongPressTimer:)])
+		[self _handleSecondHalfLongPressTimer:nil];
+	else if ([[%c(SBIconController) sharedInstance] respondsToSelector:@selector(_cancelAppIconForceTouchGestureAndBeginEditing)])
+		[[%c(SBIconController) sharedInstance] _cancelAppIconForceTouchGestureAndBeginEditing];
 }
 
 -(void)_updateJitter {
@@ -348,8 +343,12 @@ static void hapticFeedback() {
 -(void)setHighlighted:(BOOL)arg1 {
 	%orig(arg1);
 
-	if (arg1 && isEnabled && ![[%c(SBIconController) sharedInstance] isEditing])
-		[self cancelLongPressTimer];
+	if (arg1 && isEnabled && ![[%c(SBIconController) sharedInstance] isEditing]) {
+		if ([self respondsToSelector:@selector(cancelLongPressTimer)])
+			[self cancelLongPressTimer];
+		else if ([self respondsToSelector:@selector(cancelDrag)])
+			[self cancelDrag];
+	}
 }
 %end
 
