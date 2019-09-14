@@ -136,6 +136,26 @@ static void hapticFeedback() {
 	}
 }
 
+// Zenith Compatibility (it requires an oldView property)
+@interface Force3DLongPressGestureRecognizer : UILongPressGestureRecognizer
+@property (nonatomic, retain) UIView *oldView;
+@end
+
+@implementation Force3DLongPressGestureRecognizer
+-(id)initWithTarget:(id)arg1 action:(SEL)arg2 {
+	self = [super initWithTarget:arg1 action:arg2];
+	if (self != nil)
+		self.oldView = nil;
+	return self;
+}
+
+-(void)dealloc {
+	self.oldView = nil;
+
+	[super dealloc];
+}
+@end
+
 %hook SBIconView
 %property (nonatomic, retain) UIGestureRecognizer * editingGestureRecognizer;
 %property (nonatomic, assign) BOOL didPresentAfterPeek;
@@ -175,7 +195,7 @@ static void hapticFeedback() {
 		// remove previous gesture and add our own gesture for 3D touch shorcuts
 		if (self.appIconForceTouchGestureRecognizer != nil)
 			[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-		self.appIconForceTouchGestureRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
+		self.appIconForceTouchGestureRecognizer = [[[Force3DLongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
 		((UILongPressGestureRecognizer  *)self.appIconForceTouchGestureRecognizer).minimumPressDuration = longPressDuration;
 
 		// remove previous gesture and add different gesture for editing
