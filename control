@@ -1,7 +1,7 @@
 Package: com.dgh0st.force3dappshortcuts
 Name: Force3DAppShortcuts
 Depends: mobilesubstrate
-Version: 0.0.4
+Version: 0.0.8
 Architecture: iphoneos-arm
 Description: Enable 3D touch shortcuts on homescreen for older devices.
 Maintainer: DGh0st <deeppwnage@yahoo.com>

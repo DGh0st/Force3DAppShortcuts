@@ -3,6 +3,10 @@
 
 extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystemSoundID, id unknown, NSDictionary *options);
 
+@interface UIView (Force3DPrivate)
+-(id)_gestureRecognizers;
+@end
+
 @interface SBUIIconForceTouchIconViewWrapperView : UIView
 @end
 
@@ -45,8 +49,7 @@ extern "C" void AudioServicesPlaySystemSoundWithVibration(SystemSoundID inSystem
 @end
 
 @interface SBIconView : UIView
-@property (nonatomic,retain) UIGestureRecognizer * editingGestureRecognizer;
-@property (nonatomic,retain) UIGestureRecognizer * appIconForceTouchGestureRecognizer;
+@property (nonatomic,retain) UIGestureRecognizer *appIconForceTouchGestureRecognizer;
 @property (nonatomic,assign) BOOL didPresentAfterPeek;
 -(void)_handleSecondHalfLongPressTimer:(id)arg1;
 -(void)cancelLongPressTimer;
@@ -96,7 +99,7 @@ static void reloadPrefs() {
 		if (keyList != nil) {
 			prefs = (NSDictionary *)CFPreferencesCopyMultiple(keyList, (CFStringRef)kIdentifier, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
 			if (prefs == nil)
-				prefs = [NSDictionary dictionary];
+				prefs = [[NSDictionary alloc] init];
 			CFRelease(keyList);
 		}
 	} else {
@@ -150,14 +153,26 @@ static void hapticFeedback() {
 }
 
 -(void)dealloc {
+	[self.oldView release];
 	self.oldView = nil;
 
 	[super dealloc];
 }
 @end
 
+@interface Force3DSwipeGestureRecognizer : UISwipeGestureRecognizer
+@end
+
+@implementation Force3DSwipeGestureRecognizer
+@end
+
+@interface Force3DTapGestureRecognizer : UITapGestureRecognizer
+@end
+
+@implementation Force3DTapGestureRecognizer
+@end
+
 %hook SBIconView
-%property (nonatomic, retain) UIGestureRecognizer * editingGestureRecognizer;
 %property (nonatomic, assign) BOOL didPresentAfterPeek;
 
 // Fixes gestures not being registered the first time homescreeen is invoked
@@ -189,40 +204,47 @@ static void hapticFeedback() {
 	%orig(arg1);
 }
 
+-(void)dealloc {
+	self.appIconForceTouchGestureRecognizer = nil;
+
+	%orig();
+}
+
 %new
 -(void)_configureLongPress3DTouchGesture {
-	if (![[%c(SBIconController) sharedInstance] isEditing]) {
-		// remove previous gesture and add our own gesture for 3D touch shorcuts
-		if (self.appIconForceTouchGestureRecognizer != nil)
-			[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-		self.appIconForceTouchGestureRecognizer = [[[Force3DLongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)] autorelease];
-		((UILongPressGestureRecognizer  *)self.appIconForceTouchGestureRecognizer).minimumPressDuration = longPressDuration;
+	NSArray *gestureRecognizers = [[self _gestureRecognizers] copy];
+	for (UIGestureRecognizer *gestureRecognizer in gestureRecognizers)
+		if ([gestureRecognizer isKindOfClass:[Force3DLongPressGestureRecognizer class]] || [gestureRecognizer isKindOfClass:[Force3DSwipeGestureRecognizer class]] || [gestureRecognizer isKindOfClass:[Force3DTapGestureRecognizer class]])
+			[self removeGestureRecognizer:gestureRecognizer];
+	[gestureRecognizers release];
+	self.appIconForceTouchGestureRecognizer = nil;
 
-		// remove previous gesture and add different gesture for editing
-		if (self.editingGestureRecognizer != nil)
-			[self removeGestureRecognizer:self.editingGestureRecognizer];
+	if (![[%c(SBIconController) sharedInstance] isEditing]) {
+		Force3DLongPressGestureRecognizer *appIconForceTouchGestureRecognizer = [[Force3DLongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handle3DTouchLongPress:)];
+		appIconForceTouchGestureRecognizer.minimumPressDuration = longPressDuration;
+
+		UIGestureRecognizer *editingGestureRecognizer = nil;
 		if (editingGesture == swipeUp || editingGesture == swipeDown || editingGesture == swipeLeft || editingGesture == swipeRight) {
-			self.editingGestureRecognizer = [[[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
+			editingGestureRecognizer = [[Force3DSwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)];
 			if (editingGesture == swipeUp)
-				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionUp;
+				((Force3DSwipeGestureRecognizer *)editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionUp;
 			else if (editingGesture == swipeDown)
-				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionDown;
+				((Force3DSwipeGestureRecognizer *)editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionDown;
 			else if (editingGesture == swipeLeft)
-				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionLeft;
+				((Force3DSwipeGestureRecognizer *)editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionLeft;
 			else
-				((UISwipeGestureRecognizer *)self.editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionRight;
-			[self addGestureRecognizer:self.editingGestureRecognizer];
+				((Force3DSwipeGestureRecognizer *)editingGestureRecognizer).direction = UISwipeGestureRecognizerDirectionRight;
+			// [self addGestureRecognizer:self.editingGestureRecognizer];
 		} else if (editingGesture == doubleTap) {
-			self.editingGestureRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)] autorelease];
-			((UITapGestureRecognizer *)self.editingGestureRecognizer).numberOfTapsRequired = 2;
+			editingGestureRecognizer = [[Force3DTapGestureRecognizer alloc] initWithTarget:self action:@selector(_handleEditingeditingGestureRecognizer:)];
+			((Force3DTapGestureRecognizer *)editingGestureRecognizer).numberOfTapsRequired = 2;
 		}
-		[self addGestureRecognizer:self.editingGestureRecognizer];
-	} else {
-		// remove previous gestures
-		if (self.appIconForceTouchGestureRecognizer != nil)
-			[self removeGestureRecognizer:self.appIconForceTouchGestureRecognizer];
-		if (self.editingGestureRecognizer != nil)
-			[self removeGestureRecognizer:self.editingGestureRecognizer];
+		[self addGestureRecognizer:editingGestureRecognizer];
+
+		self.appIconForceTouchGestureRecognizer = [appIconForceTouchGestureRecognizer autorelease];
+
+		[editingGestureRecognizer release];
+
 	}
 }
 
@@ -240,7 +262,7 @@ static void hapticFeedback() {
 			[iconView cancelDrag];
 
 		// create shortcuts and peek
-		SBUIAppIconForceTouchController *_forceTouchAppController = [[[%c(SBUIAppIconForceTouchController) alloc] init] autorelease];
+		SBUIAppIconForceTouchController *_forceTouchAppController = [[%c(SBUIAppIconForceTouchController) alloc] init];
 		[_forceTouchAppController setDelegate:_iconController];
 		[_forceTouchAppController setDataSource:_iconController];
 		MSHookIvar<SBUIAppIconForceTouchController *>(_iconController, "_appIconForceTouchController") = _forceTouchAppController;
@@ -344,7 +366,7 @@ static void hapticFeedback() {
 }
 
 %new
--(void)_handleEditingeditingGestureRecognizer:(UISwipeGestureRecognizer *)gestureRecognizer {
+-(void)_handleEditingeditingGestureRecognizer:(UIGestureRecognizer *)gestureRecognizer {
 	// go into editing mode
 	if ([self respondsToSelector:@selector(_handleSecondHalfLongPressTimer:)])
 		[self _handleSecondHalfLongPressTimer:nil];
@@ -376,7 +398,17 @@ static void hapticFeedback() {
 -(void)appIconForceTouchController:(id)arg1 didDismissForGestureRecognizer:(id)arg2 {
 	%orig(arg1, arg2);
 
-	MSHookIvar<SBUIAppIconForceTouchController *>(self, "_appIconForceTouchController") = nil;
+	SBUIAppIconForceTouchController *&_forceTouchAppController = MSHookIvar<SBUIAppIconForceTouchController *>(self, "_appIconForceTouchController");
+	[_forceTouchAppController release];
+	_forceTouchAppController = nil;
+}
+
+-(void)dealloc {
+	SBUIAppIconForceTouchController *&_forceTouchAppController = MSHookIvar<SBUIAppIconForceTouchController *>(self, "_appIconForceTouchController");
+	[_forceTouchAppController release];
+	_forceTouchAppController = nil;
+
+	%orig();
 }
 %end
 
